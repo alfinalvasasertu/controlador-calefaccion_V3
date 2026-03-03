@@ -1005,6 +1005,7 @@ h3 { color: #555; margin: 25px 0 15px 0; }
 <button class="tab" onclick="showTab(2)">📡 WiFi</button>
 <button class="tab" onclick="showTab(3)">🚨 Alarmas</button>
 <button class="tab" onclick="showTab(4)">⏰ Programación</button>
+<button class="tab" onclick="showTab(5)">🖼️ Imagen</button>
 </div>
 
 <div id="tab0" class="content active">
@@ -1155,10 +1156,43 @@ h3 { color: #555; margin: 25px 0 15px 0; }
 <button onclick="saveSchedule()" style="margin-top:20px">💾 Guardar Programación</button>
 </div>
 
+<div id="tab5" class="content">
+<h2>Metadatos de Imagen</h2>
+<p style="margin-bottom:15px">Selecciona una imagen para ver sus metadatos comunes. Solo se muestra información básica del archivo; no se extrae ni se envía ningún dato EXIF, GPS ni información privada.</p>
+<input type="file" id="img-input" accept="image/*" onchange="readImageMeta(this)">
+<div id="img-meta" style="margin-top:20px"></div>
+</div>
+
 </div>
 
 <script>
 let data = {};
+
+function readImageMeta(input) {
+  const out = document.getElementById('img-meta');
+  if (!input.files || !input.files[0]) { out.innerHTML = ''; return; }
+  const f = input.files[0];
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  let rows = '<table><tr><th>Campo</th><th>Valor</th></tr>';
+  rows += `<tr><td>Nombre</td><td>${esc(f.name)}</td></tr>`;
+  rows += `<tr><td>Tipo</td><td>${esc(f.type || 'desconocido')}</td></tr>`;
+  rows += `<tr><td>Tamaño</td><td>${f.size} bytes (${(f.size/1024).toFixed(1)} KB)</td></tr>`;
+  rows += `<tr><td>Última modificación</td><td>${esc(new Date(f.lastModified).toLocaleString())}</td></tr>`;
+  const img = new Image();
+  const url = URL.createObjectURL(f);
+  img.onload = function() {
+    rows += `<tr><td>Dimensiones</td><td>${img.naturalWidth} × ${img.naturalHeight} px</td></tr>`;
+    rows += '</table>';
+    out.innerHTML = rows;
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = function() {
+    rows += '</table>';
+    out.innerHTML = rows;
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
 
 function showTab(n) {
   document.querySelectorAll('.tab').forEach((t, i) => {
